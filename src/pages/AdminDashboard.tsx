@@ -107,7 +107,6 @@ const AdminDashboard: React.FC = () => {
     });
   };
 
-  // Only update status once when sending a message, not on each input change
   const handleMessageChange = (value: string) => {
     setMessage(value);
   };
@@ -115,10 +114,15 @@ const AdminDashboard: React.FC = () => {
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedReport) return;
 
+    // Prevent sending if report is resolved
+    if (selectedReport.status === 'Resolved') {
+      setErrorMsg('Cannot send message: Report is resolved.');
+      return;
+    }
+
     setLoading(true);
     setErrorMsg('');
 
-    // Insert new message
     const { error: insertError } = await supabase.from('messages').insert([
       {
         report_id: selectedReport.id,
@@ -133,7 +137,7 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
-    // Update report status if it is Pending
+    // Update status from Pending to In Progress once message sent
     if (selectedReport.status === 'Pending') {
       const { error: updateError } = await supabase
         .from('incident_reports')
@@ -291,60 +295,69 @@ const AdminDashboard: React.FC = () => {
               </p>
             </IonText>
 
-<IonList style={{ maxHeight: '300px', overflowY: 'auto' }}>
-  {messages.length === 0 ? (
-    <IonText>No messages yet.</IonText>
-  ) : (
-    messages.map((msg) => (
-      <IonItem
-        key={msg.id}
-        lines="none"
-        style={{ justifyContent: msg.sender === 'admin' ? 'flex-end' : 'flex-start' }}
-      >
-        <IonLabel
-          style={{
-            textAlign: msg.sender === 'admin' ? 'right' : 'left',
-            maxWidth: '75%',
-          }}
-        >
-          <p
-            style={{
-              padding: '8px',
-              borderRadius: '10px',
-              display: 'inline-block',
-              wordBreak: 'break-word',
-              backgroundColor: 'transparent', // no background color
-              border: '1px solid #ccc', // optional: subtle border for visibility
-            }}
-          >
-            {msg.message}
-          </p>
-          <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
-            <span style={{ fontWeight: 'bold' }}>
-              {msg.sender === 'admin' ? 'You' : 'User'}
-            </span>{' '}
-            &middot; {formatPHTime(msg.created_at)}
-          </div>
-        </IonLabel>
-      </IonItem>
-    ))
-  )}
-  <div ref={messagesEndRef} />
-</IonList>
-
+            <IonList style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {messages.length === 0 ? (
+                <IonText>No messages yet.</IonText>
+              ) : (
+                messages.map((msg) => (
+                  <IonItem
+                    key={msg.id}
+                    lines="none"
+                    style={{
+                      justifyContent: msg.sender === 'admin' ? 'flex-end' : 'flex-start',
+                    }}
+                  >
+                    <IonLabel
+                      style={{
+                        textAlign: msg.sender === 'admin' ? 'right' : 'left',
+                        maxWidth: '75%',
+                      }}
+                    >
+                      <p
+                        style={{
+                          padding: '8px',
+                          borderRadius: '10px',
+                          display: 'inline-block',
+                          wordBreak: 'break-word',
+                          backgroundColor: 'transparent',
+                          border: '1px solid #ccc',
+                        }}
+                      >
+                        {msg.message}
+                      </p>
+                      <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
+                        <span style={{ fontWeight: 'bold' }}>
+                          {msg.sender === 'admin' ? 'You' : 'User'}
+                        </span>{' '}
+                        &middot; {formatPHTime(msg.created_at)}
+                      </div>
+                    </IonLabel>
+                  </IonItem>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </IonList>
 
             <IonTextarea
-              placeholder="Type your message here..."
+              placeholder={
+                selectedReport?.status === 'Resolved'
+                  ? "Report is resolved. Messaging disabled."
+                  : "Type your message here..."
+              }
               value={message}
               onIonChange={(e) => handleMessageChange(e.detail.value ?? '')}
               rows={3}
-              disabled={loading}
+              disabled={loading || selectedReport?.status === 'Resolved'}
             />
 
             <IonButton
               expand="block"
               onClick={handleSendMessage}
-              disabled={loading || message.trim().length === 0}
+              disabled={
+                loading ||
+                message.trim().length === 0 ||
+                selectedReport?.status === 'Resolved'
+              }
               style={{ marginTop: '10px' }}
             >
               Send Message

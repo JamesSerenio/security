@@ -304,7 +304,7 @@ const ReportIncident: React.FC = () => {
                   >
                     <IonLabel
                       style={{
-                        textAlign: msg.sender === 'admin' ? 'right' : 'left',
+                        textAlign: msg.sender === 'user' ? 'right' : 'left',
                         maxWidth: '75%',
                       }}
                     >
@@ -322,7 +322,7 @@ const ReportIncident: React.FC = () => {
                       </p>
                       <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
                         <span style={{ fontWeight: 'bold' }}>
-                          {msg.sender === 'admin' ? 'You' : 'admin'}
+                          {msg.sender === 'user' ? 'You' : 'admin'}
                         </span>{' '}
                         &middot; {formatPHTime(msg.created_at)}
                       </div>
@@ -333,17 +333,26 @@ const ReportIncident: React.FC = () => {
               <div ref={messagesEndRef} />
             </IonList>
 
-            <IonTextarea
-              placeholder="Type your message here..."
-              value={newMessage}
-              onIonChange={e => setNewMessage(e.detail.value!)}
-              rows={3}
-              className="ion-margin-top"
-            />
+            {/* Disable input and button if report is resolved */}
+            {selectedReport.status.toLowerCase() === 'resolved' ? (
+              <IonText color="medium" className="ion-padding-top">
+                This report has been resolved. Messaging is disabled.
+              </IonText>
+            ) : (
+              <>
+                <IonTextarea
+                  placeholder="Type your message here..."
+                  value={newMessage}
+                  onIonChange={e => setNewMessage(e.detail.value!)}
+                  rows={3}
+                  className="ion-margin-top"
+                />
 
-            <IonButton onClick={sendMessage} expand="block" disabled={!newMessage.trim()}>
-              Send Message
-            </IonButton>
+                <IonButton onClick={sendMessage} expand="block" disabled={!newMessage.trim()}>
+                  Send Message
+                </IonButton>
+              </>
+            )}
           </>
         )}
       </IonContent>
