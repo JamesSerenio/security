@@ -10,7 +10,16 @@ import {
   IonText,
   IonLabel,
   IonItem,
+  IonGrid,
+  IonRow,
+  IonCol,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
+  IonCardContent,
+  IonLoading,
 } from '@ionic/react';
+import { useHistory } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 const Register: React.FC = () => {
@@ -20,6 +29,7 @@ const Register: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const history = useHistory();
 
   const handleRegister = async () => {
     setErrorMsg('');
@@ -69,31 +79,120 @@ const Register: React.FC = () => {
   return (
     <IonPage>
       <IonHeader>
-        <IonToolbar>
-          <IonTitle>Register</IonTitle>
+        <IonToolbar style={{ '--background': '#000000' }}>
+          <IonTitle className="ion-text-center" style={{ color: '#007bff' }}>
+            Register
+          </IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent className="ion-padding">
-        <IonItem>
-          <IonLabel position="floating">Email</IonLabel>
-          <IonInput type="email" value={email} onIonChange={(e) => setEmail(e.detail.value!)} />
-        </IonItem>
-        <IonItem>
-          <IonLabel position="floating">Password</IonLabel>
-          <IonInput type="password" value={password} onIonChange={(e) => setPassword(e.detail.value!)} />
-        </IonItem>
-        <IonItem>
-          <IonLabel position="floating">Confirm Password</IonLabel>
-          <IonInput type="password" value={confirmPassword} onIonChange={(e) => setConfirmPassword(e.detail.value!)} />
-        </IonItem>
-        {errorMsg && <IonText color="danger">{errorMsg}</IonText>}
-        {successMsg && <IonText color="success">{successMsg}</IonText>}
-        <IonButton expand="block" onClick={handleRegister} disabled={loading} className="ion-margin-top">
-          {loading ? 'Registering...' : 'Register'}
-        </IonButton>
-        <IonButton fill="clear" expand="block" routerLink="/login" className="ion-margin-top">
-          Already have an account? Login here
-        </IonButton>
+
+      <IonContent className="ion-padding" style={{ backgroundColor: '#121212' }}>
+        <IonLoading isOpen={loading} message={'Registering...'} spinner="dots" />
+
+        <IonGrid className="ion-justify-content-center ion-align-items-center" style={{ height: '100%' }}>
+          <IonRow className="ion-justify-content-center" style={{ paddingTop: '0px' }}>
+            <IonCol size-md="6" size-lg="4">
+              <IonCard style={{ backgroundColor: '#000000', border: '1px solid #007bff', borderRadius: '16px' }}>
+                <IonCardHeader>
+                  <IonCardTitle className="ion-text-center" style={{ color: '#007bff', fontSize: '1.8rem' }}>
+                    {/* You can put a header text here if you want */}
+                  </IonCardTitle>
+                </IonCardHeader>
+
+                <IonCardContent>
+                  <IonItem lines="full" style={{ backgroundColor: '#000000', borderBottom: '1px solid #333' }}>
+                    <IonLabel position="floating" style={{ color: '#999' }}>
+                      {/* Email Label */}
+                    </IonLabel>
+                    <IonInput
+                      type="email"
+                      value={email}
+                      placeholder="Email"
+                      onIonChange={e => setEmail(e.detail.value!)}
+                      style={{ color: '#fff' }}
+                      required
+                    />
+                  </IonItem>
+
+                  <IonItem
+                    lines="full"
+                    style={{ backgroundColor: '#000000', borderBottom: '1px solid #333', marginTop: '12px' }}
+                  >
+                    <IonLabel position="floating" style={{ color: '#999' }}>
+                      {/* Password Label */}
+                    </IonLabel>
+                    <IonInput
+                      type="password"
+                      value={password}
+                      placeholder="Password"
+                      onIonChange={e => setPassword(e.detail.value!)}
+                      style={{ color: '#fff' }}
+                      required
+                    />
+                  </IonItem>
+
+                  <IonItem
+                    lines="full"
+                    style={{ backgroundColor: '#000000', borderBottom: '1px solid #333', marginTop: '12px' }}
+                  >
+                    <IonLabel position="floating" style={{ color: '#999' }}>
+                      {/* Confirm Password Label */}
+                    </IonLabel>
+                    <IonInput
+                      type="password"
+                      value={confirmPassword}
+                      placeholder="Confirm Password"
+                      onIonChange={e => setConfirmPassword(e.detail.value!)}
+                      style={{ color: '#fff' }}
+                      required
+                    />
+                  </IonItem>
+
+                  {errorMsg && (
+                    <IonText color="danger">
+                      <p className="ion-padding-top">{errorMsg}</p>
+                    </IonText>
+                  )}
+                  {successMsg && (
+                    <IonText color="success">
+                      <p className="ion-padding-top">{successMsg}</p>
+                    </IonText>
+                  )}
+
+                  <IonButton
+                    expand="block"
+                    onClick={handleRegister}
+                    disabled={loading}
+                    fill="clear"
+                    style={{
+                      marginTop: '20px',
+                      fontWeight: 'bold',
+                      borderRadius: '10px',
+                      border: '1px solid #007bff',
+                      color: '#007bff',
+                      background: 'transparent',
+                    }}
+                  >
+                    {loading ? 'Registering...' : 'Register'}
+                  </IonButton>
+
+                  <IonText className="ion-text-center ion-margin-top">
+                    <p style={{ color: '#ccc' }}>
+                      Already have an account?{' '}
+                      <IonText
+                        color="light"
+                        style={{ color: '#007bff', cursor: 'pointer' }}
+                        onClick={() => history.push('/login')}
+                      >
+                        Login here
+                      </IonText>
+                    </p>
+                  </IonText>
+                </IonCardContent>
+              </IonCard>
+            </IonCol>
+          </IonRow>
+        </IonGrid>
       </IonContent>
     </IonPage>
   );
