@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonInput, IonButton, IonText, IonLabel, IonItem } from '@ionic/react';
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonInput,
+  IonButton,
+  IonText,
+  IonLabel,
+  IonItem,
+} from '@ionic/react';
 import { supabase } from '../supabaseClient';
 
 const Register: React.FC = () => {
@@ -25,12 +36,29 @@ const Register: React.FC = () => {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
 
     if (error) {
       setErrorMsg(error.message);
-    } else {
+    } else if (data.user) {
+      // Insert into profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: data.user.id,
+            email: email,
+            role: 'user', // default role
+          },
+        ]);
+
+      if (profileError) {
+        setErrorMsg('Registration succeeded, but failed to create user profile.');
+        console.error(profileError);
+        return;
+      }
+
       setSuccessMsg('Registration successful! Please check your email to confirm your account.');
       setEmail('');
       setPassword('');
@@ -48,15 +76,15 @@ const Register: React.FC = () => {
       <IonContent className="ion-padding">
         <IonItem>
           <IonLabel position="floating">Email</IonLabel>
-          <IonInput type="email" value={email} onIonChange={e => setEmail(e.detail.value!)} />
+          <IonInput type="email" value={email} onIonChange={(e) => setEmail(e.detail.value!)} />
         </IonItem>
         <IonItem>
           <IonLabel position="floating">Password</IonLabel>
-          <IonInput type="password" value={password} onIonChange={e => setPassword(e.detail.value!)} />
+          <IonInput type="password" value={password} onIonChange={(e) => setPassword(e.detail.value!)} />
         </IonItem>
         <IonItem>
           <IonLabel position="floating">Confirm Password</IonLabel>
-          <IonInput type="password" value={confirmPassword} onIonChange={e => setConfirmPassword(e.detail.value!)} />
+          <IonInput type="password" value={confirmPassword} onIonChange={(e) => setConfirmPassword(e.detail.value!)} />
         </IonItem>
         {errorMsg && <IonText color="danger">{errorMsg}</IonText>}
         {successMsg && <IonText color="success">{successMsg}</IonText>}
