@@ -54,6 +54,7 @@ const ReportIncident: React.FC = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<string | undefined>(undefined);
+  const [customType, setCustomType] = useState('');
   const [barangay, setBarangay] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -137,7 +138,10 @@ const ReportIncident: React.FC = () => {
   const handleSubmit = async () => {
     setErrorMsg('');
     setSuccessMsg('');
-    if (!title || !description || !type || !barangay) {
+
+    const finalType = type === 'Other' ? customType.trim() : type;
+
+    if (!title || !description || !finalType || !barangay) {
       setErrorMsg('Please fill in all fields');
       return;
     }
@@ -152,7 +156,7 @@ const ReportIncident: React.FC = () => {
       user_id: user.id,
       title,
       description,
-      type,
+      type: finalType,
       barangay,
     }]);
 
@@ -162,6 +166,7 @@ const ReportIncident: React.FC = () => {
       setTitle('');
       setDescription('');
       setType(undefined);
+      setCustomType('');
       setBarangay('');
 
       const { data } = await supabase
@@ -254,12 +259,22 @@ const ReportIncident: React.FC = () => {
       <IonContent className="ion-padding">
         <IonItem><IonLabel position="floating">Title</IonLabel>
           <IonInput value={title} onIonChange={e => setTitle(e.detail.value!)} /></IonItem>
+
         <IonItem><IonLabel position="floating">Description</IonLabel>
           <IonTextarea value={description} onIonChange={e => setDescription(e.detail.value!)} rows={6} /></IonItem>
+
         <IonItem><IonLabel>Type</IonLabel>
           <IonSelect value={type} placeholder="Select type" onIonChange={e => setType(e.detail.value)}>
             {INCIDENT_TYPES.map(t => <IonSelectOption key={t} value={t}>{t}</IonSelectOption>)}
           </IonSelect></IonItem>
+
+        {type === 'Other' && (
+          <IonItem>
+            <IonLabel position="floating">Specify Incident Type</IonLabel>
+            <IonInput value={customType} onIonChange={e => setCustomType(e.detail.value!)} />
+          </IonItem>
+        )}
+
         <IonItem><IonLabel position="floating">Barangay</IonLabel>
           <IonInput value={barangay} onIonChange={e => setBarangay(e.detail.value!)} /></IonItem>
 
@@ -301,24 +316,23 @@ const ReportIncident: React.FC = () => {
                     style={{ justifyContent: msg.sender === 'admin' ? 'flex-end' : 'flex-start' }}>
                     <IonLabel style={{ textAlign: msg.sender === 'user' ? 'right' : 'left' }}>
                       {msg.is_image && msg.image_url ? (
-                              <a href={msg.image_url} target="_blank" rel="noopener noreferrer">
-                                <img
-                                  src={msg.image_url}
-                                  alt="image"
-                                  style={{ maxWidth: '200px', borderRadius: '10px', cursor: 'pointer' }}
-                                />
-                              </a>
-                            ) : (
-                              <p style={{
-                                padding: '8px',
-                                borderRadius: '10px',
-                                display: 'inline-block',
-                                wordBreak: 'break-word',
-                                backgroundColor: 'transparent',
-                                border: '1px solid #ccc'
-                              }}>{msg.message}</p>
-                            )}
-
+                        <a href={msg.image_url} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={msg.image_url}
+                            alt="image"
+                            style={{ maxWidth: '200px', borderRadius: '10px', cursor: 'pointer' }}
+                          />
+                        </a>
+                      ) : (
+                        <p style={{
+                          padding: '8px',
+                          borderRadius: '10px',
+                          display: 'inline-block',
+                          wordBreak: 'break-word',
+                          backgroundColor: 'transparent',
+                          border: '1px solid #ccc'
+                        }}>{msg.message}</p>
+                      )}
                       <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '4px' }}>
                         <b>{msg.sender === 'user' ? 'You' : 'admin'}</b> · {formatPHTime(msg.created_at)}
                       </div>
