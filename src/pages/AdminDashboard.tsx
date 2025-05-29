@@ -15,9 +15,14 @@ import {
   IonButtons,
   IonIcon,
   IonSpinner,
+  IonMenu,
+  IonMenuButton,
+  IonSplitPane,
+
 } from '@ionic/react';
 import { supabase } from '../supabaseClient';
 import { closeOutline, addOutline } from 'ionicons/icons';
+import { useHistory } from 'react-router-dom';
 
 type IncidentReport = {
   id: number;
@@ -49,6 +54,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const history = useHistory();
 
   useEffect(() => {
     fetchAllReports();
@@ -199,10 +205,10 @@ const AdminDashboard: React.FC = () => {
     }
 
     const { data: publicUrlData } = supabase.storage
-  .from('chat-images')
-  .getPublicUrl(filePath);
+      .from('chat-images')
+      .getPublicUrl(filePath);
 
-      const publicUrl = publicUrlData?.publicUrl;
+    const publicUrl = publicUrlData?.publicUrl;
 
     const { error: insertError } = await supabase.from('messages').insert([
       {
@@ -243,187 +249,233 @@ const AdminDashboard: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleLogout = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setErrorMsg(error.message);
+      setLoading(false);
+      return;
+    }
+    setLoading(false);
+    history.push('/login'); // <-- Here is history push
+  };
+
   return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Admin Dashboard</IonTitle>
-          {selectedReport && (
-            <IonButtons slot="end">
-              <IonButton onClick={() => setSelectedReport(null)}>
-                <IonIcon icon={closeOutline} />
-              </IonButton>
-            </IonButtons>
-          )}
-        </IonToolbar>
-      </IonHeader>
-
-      <IonContent className="ion-padding">
-        {errorMsg && <IonText color="danger">{errorMsg}</IonText>}
-        {loading && <IonSpinner name="dots" />}
-
-        {!selectedReport ? (
+    <IonSplitPane contentId="main-content">
+      <IonMenu contentId="main-content" side="start" menuId="main-menu">
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>Menu</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent>
           <IonList>
-            {reports.length === 0 ? (
-              <IonText>No reports found.</IonText>
-            ) : (
-              reports.map((report) => (
-                <IonItem
-                  key={report.id}
-                  button
-                  onClick={() => setSelectedReport(report)}
-                >
-                  <IonLabel>
-                    <h2>{report.title}</h2>
-                    <p>
-                      <strong>Type:</strong> {report.type} |{' '}
-                      <strong>Barangay:</strong> {report.barangay}
-                    </p>
-                    <p>{report.description}</p>
-                    <p>
-                      <small>
-                        <strong>Date Reported:</strong>{' '}
-                        {formatPHTime(report.date_reported)}
-                      </small>
-                    </p>
-                  </IonLabel>
-                  <IonBadge
-                    color={
-                      report.status === 'Pending'
-                        ? 'warning'
-                        : report.status === 'In Progress'
-                        ? 'primary'
-                        : 'success'
-                    }
-                  >
-                    {report.status}
-                  </IonBadge>
-                </IonItem>
-              ))
-            )}
+            <IonItem button onClick={() => history.push('/logs')}>
+              <IonLabel>Logs</IonLabel>
+            </IonItem>
+            <IonItem button onClick={handleLogout}>
+              <IonLabel>Logout</IonLabel>
+            </IonItem>
           </IonList>
-        ) : (
-          <>
-            <IonText>
-              <h2>{selectedReport.title}</h2>
-              <p>
-                <strong>Type:</strong> {selectedReport.type} |{' '}
-                <strong>Barangay:</strong> {selectedReport.barangay}
-              </p>
-              <p>{selectedReport.description}</p>
-              <p>
-                <small>
-                  <strong>Status:</strong>{' '}
-                  <IonBadge
-                    color={
-                      selectedReport.status === 'Pending'
-                        ? 'warning'
-                        : selectedReport.status === 'In Progress'
-                        ? 'primary'
-                        : 'success'
-                    }
-                  >
-                    {selectedReport.status}
-                  </IonBadge>
-                </small>
-              </p>
-            </IonText>
+        </IonContent>
+      </IonMenu>
 
-            <IonList style={{ maxHeight: '300px', overflowY: 'auto' }}>
-              {messages.map((msg) => (
-                <IonItem
-                  key={msg.id}
-                  lines="none"
-                  style={{
-                    justifyContent:
-                      msg.sender === 'admin' ? 'flex-end' : 'flex-start',
-                  }}
-                >
-                  <IonLabel
+      <IonPage id="main-content">
+        <IonHeader>
+          <IonToolbar>
+            <IonButtons slot="start">
+              <IonMenuButton menu="main-menu" />
+            </IonButtons>
+            <IonTitle>Admin Dashboard</IonTitle>
+            {selectedReport && (
+              <IonButtons slot="end">
+                <IonButton onClick={() => setSelectedReport(null)}>
+                  <IonIcon icon={closeOutline} />
+                </IonButton>
+              </IonButtons>
+            )}
+          </IonToolbar>
+        </IonHeader>
+
+        <IonContent className="ion-padding">
+          {errorMsg && <IonText color="danger">{errorMsg}</IonText>}
+          {loading && <IonSpinner name="dots" />}
+
+          {!selectedReport ? (
+            <IonList>
+              {reports.length === 0 ? (
+                <IonText>No reports found.</IonText>
+              ) : (
+                reports.map((report) => (
+                  <IonItem
+                    key={report.id}
+                    button
+                    onClick={() => setSelectedReport(report)}
+                  >
+                    <IonLabel>
+                      <h2>{report.title}</h2>
+                      <p>
+                        <strong>Type:</strong> {report.type} |{' '}
+                        <strong>Barangay:</strong> {report.barangay}
+                      </p>
+                      <p>{report.description}</p>
+                      <p>
+                        <small>
+                          <strong>Date Reported:</strong>{' '}
+                          {formatPHTime(report.date_reported)}
+                        </small>
+                      </p>
+                    </IonLabel>
+                    <IonBadge
+                      color={
+                        report.status === 'Pending'
+                          ? 'warning'
+                          : report.status === 'In Progress'
+                          ? 'primary'
+                          : 'success'
+                      }
+                    >
+                      {report.status}
+                    </IonBadge>
+                  </IonItem>
+                ))
+              )}
+            </IonList>
+          ) : (
+            <>
+              <IonText>
+                <h2>{selectedReport.title}</h2>
+                <p>
+                  <strong>Type:</strong> {selectedReport.type} |{' '}
+                  <strong>Barangay:</strong> {selectedReport.barangay}
+                </p>
+                <p>{selectedReport.description}</p>
+                <p>
+                  <small>
+                    <strong>Status:</strong>{' '}
+                    <IonBadge
+                      color={
+                        selectedReport.status === 'Pending'
+                          ? 'warning'
+                          : selectedReport.status === 'In Progress'
+                          ? 'primary'
+                          : 'success'
+                      }
+                    >
+                      {selectedReport.status}
+                    </IonBadge>
+                  </small>
+                </p>
+              </IonText>
+
+              <IonList style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                {messages.map((msg) => (
+                  <IonItem
+                    key={msg.id}
+                    lines="none"
                     style={{
-                      textAlign: msg.sender === 'admin' ? 'right' : 'left',
-                      maxWidth: '100%',
+                      justifyContent:
+                        msg.sender === 'admin' ? 'flex-end' : 'flex-start',
                     }}
                   >
-                    {msg.is_image && msg.image_url ? (
-                      <img
-                        src={msg.image_url}
-                        alt="uploaded"
-                        style={{
-                          maxWidth: '200px',
-                          maxHeight: '200px',
-                          borderRadius: '8px',
-                          objectFit: 'cover',
-                          cursor: 'pointer',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                        }}
-                        onClick={() => window.open(msg.image_url, '_blank')}
-                      />
-                    ) : (
-                      <p
-                        style={{
-                          padding: '8px',
-                          borderRadius: '10px',
-                          display: 'inline-block',
-                          backgroundColor: 'transparent',
-                          border: '1px solid #ccc',
-                          wordBreak: 'break-word',
-                        }}
-                      >
-                        {msg.message}
-                      </p>
-                    )}
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                      <b>{msg.sender === 'admin' ? 'You' : 'User'}</b> ·{' '}
-                      {formatPHTime(msg.created_at)}
-                    </div>
-                  </IonLabel>
-                </IonItem>
-              ))}
-              <div ref={messagesEndRef} />
-            </IonList>
+                    <IonLabel
+                      style={{
+                        textAlign: msg.sender === 'admin' ? 'right' : 'left',
+                        maxWidth: '100%',
+                      }}
+                    >
+                      {msg.is_image && msg.image_url ? (
+                        <img
+                          src={msg.image_url}
+                          alt="uploaded"
+                          style={{
+                            maxWidth: '200px',
+                            maxHeight: '200px',
+                            borderRadius: '8px',
+                            objectFit: 'cover',
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                          }}
+                          onClick={() => window.open(msg.image_url, '_blank')}
+                        />
+                      ) : (
+                        <p
+                          style={{
+                            backgroundColor:
+                              msg.sender === 'admin' ? '#3880ff' : '#e0e0e0',
+                            color: msg.sender === 'admin' ? 'white' : 'black',
+                            borderRadius: '12px',
+                            padding: '8px 12px',
+                            display: 'inline-block',
+                            whiteSpace: 'pre-wrap',
+                          }}
+                        >
+                          {msg.message}
+                        </p>
+                      )}
+                      <br />
+                      <small style={{ fontSize: '0.7em', color: '#666' }}>
+                        {formatPHTime(msg.created_at)}
+                      </small>
+                    </IonLabel>
+                  </IonItem>
+                ))}
+                <div ref={messagesEndRef} />
+              </IonList>
 
-            <IonTextarea
-              placeholder={
-                selectedReport.status === 'Resolved'
-                  ? 'Report resolved, cannot send messages'
-                  : 'Type your message...'
-              }
-              value={message}
-              onIonChange={(e) => handleMessageChange(e.detail.value!)}
-              disabled={selectedReport.status === 'Resolved' || loading}
-            />
+              {selectedReport.status !== 'Resolved' && (
+                <>
+                  <IonTextarea
+                    value={message}
+                    placeholder="Type your message"
+                    onIonChange={(e) => handleMessageChange(e.detail.value!)}
+                    rows={3}
+                    disabled={loading}
+                    className="ion-margin-top"
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <IonButton
+                      onClick={handleSendMessage}
+                      disabled={loading || !message.trim()}
+                    >
+                      Send
+                    </IonButton>
+                    <IonButton
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={loading}
+                      color="tertiary"
+                    >
+                      <IonIcon icon={addOutline} />
+                      Upload Image
+                    </IonButton>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      ref={fileInputRef}
+                      onChange={handleImageUpload}
+                    />
+                  </div>
+                </>
+              )}
 
-            <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                hidden
-              />
-              <IonButton
-                onClick={() => fileInputRef.current?.click()}
-                disabled={selectedReport.status === 'Resolved'}
-              >
-                <IonIcon icon={addOutline} slot="start" />
-                Send Image
-              </IonButton>
-              <IonButton onClick={handleSendMessage} disabled={loading}>
-                Send Message
-              </IonButton>
-              <IonButton
-                color="success"
-                onClick={handleResolveReport}
-                disabled={selectedReport.status === 'Resolved'}
-              >
-                Mark as Resolved
-              </IonButton>
-            </div>
-          </>
-        )}
-      </IonContent>
-    </IonPage>
+              {selectedReport.status !== 'Resolved' && (
+                <IonButton
+                  color="success"
+                  expand="block"
+                  onClick={handleResolveReport}
+                  disabled={loading}
+                  className="ion-margin-top"
+                >
+                  Mark as Resolved
+                </IonButton>
+              )}
+            </>
+          )}
+        </IonContent>
+      </IonPage>
+    </IonSplitPane>
   );
 };
 
