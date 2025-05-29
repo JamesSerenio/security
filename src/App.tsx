@@ -10,6 +10,7 @@ import MyReports from './pages/MyReports';
 import AdminDashboard from './pages/AdminDashboard';
 import ImpactReport from './pages/ImpactReport';
 import Home from './pages/Home';
+import Logs from './pages/Logs'; 
 
 import '@ionic/react/css/core.css';
 import '@ionic/react/css/normalize.css';
@@ -38,6 +39,7 @@ const App: React.FC = () => (
           <Route path="/admin" component={AdminDashboard} exact />
           <Route path="/impact-report" component={ImpactReport} exact />
           <Route path="/home" component={Home} exact />
+          <Route path="/logs" component={Logs} exact /> {/* Add this line */}
           <Redirect exact from="/" to="/login" />
         </Switch>
       </IonRouterOutlet>

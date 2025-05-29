@@ -249,17 +249,48 @@ const AdminDashboard: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleLogout = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      setErrorMsg(error.message);
-      setLoading(false);
-      return;
-    }
+ const handleLogout = async () => {
+  setLoading(true);
+  setErrorMsg('');
+
+  // Get current user
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    console.error('Failed to get user:', userError.message);
     setLoading(false);
-    history.push('/login'); // <-- Here is history push
-  };
+    return;
+  }
+
+  const userEmail = user?.email ?? 'unknown';
+
+  // Insert a logout record into user_logs table
+  const { error: logError } = await supabase.from('user_logs').insert([
+    {
+      user_email: userEmail,
+      action: 'logout',
+      details: null,
+    },
+  ]);
+  if (logError) {
+    console.error('Failed to log logout:', logError.message);
+  }
+
+  // Proceed with logout
+  const { error: signOutError } = await supabase.auth.signOut();
+  if (signOutError) {
+    setErrorMsg(signOutError.message);
+    setLoading(false);
+    return;
+  }
+
+  setLoading(false);
+  history.push('/login')
+};
+
 
   return (
     <IonSplitPane contentId="main-content">
@@ -271,7 +302,7 @@ const AdminDashboard: React.FC = () => {
         </IonHeader>
         <IonContent>
           <IonList>
-            <IonItem button onClick={() => history.push('/logs')}>
+            <IonItem button routerLink="/logs" routerDirection="none">
               <IonLabel>Logs</IonLabel>
             </IonItem>
             <IonItem button onClick={handleLogout}>
