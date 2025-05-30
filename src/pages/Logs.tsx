@@ -66,6 +66,7 @@ const formatPHTime = (dateString: string) => {
 
 
   return (
+    
     <IonPage>
       <IonHeader>
         <IonToolbar>
@@ -83,7 +84,17 @@ const formatPHTime = (dateString: string) => {
 
         {!loading && logs.length > 0 && (
           <IonGrid>
-            <IonRow style={{ fontWeight: 'bold', borderBottom: '1px solid #ccc', paddingBottom: '6px' }}>
+            <IonRow
+              style={{
+                position: 'sticky',
+                top: 0,
+                backgroundColor: '#424242',
+                zIndex: 10,
+                fontWeight: 'bold',
+                borderBottom: '1px solid #ccc',
+                paddingBottom: '6px'
+              }}
+            >
               <IonCol size="3">User Email</IonCol>
               <IonCol size="2">Action</IonCol>
               <IonCol size="4">Details</IonCol>
